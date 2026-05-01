@@ -1,10 +1,14 @@
+import StatusCard from "@/components/StatusCard";
 import { Colors } from "@/constants/Colors";
 import { Fonts } from "@/constants/Fonts";
 import { GlobalStyles } from "@/constants/Styles";
 import { Ionicons } from "@expo/vector-icons";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useAuth } from "../../src/hooks/userAuth";
 
 export default function LoginScreen() {
+  const { username, setUsername, password, setPassword, handleLogin, status } =
+    useAuth();
   return (
     <View
       style={{
@@ -12,8 +16,21 @@ export default function LoginScreen() {
         justifyContent: "center",
         alignItems: "center",
       }}>
-      <Text style={[Fonts.bigTitle, { color: Colors.header }]}>
-        YEDİEMİN OTOPARK
+      {status && <StatusCard message={status.msg} type={status.type} />}
+      <Image
+        source={require("@/assets/images/logo.png")}
+        style={{
+          width: 130,
+          height: 130,
+          resizeMode: "contain",
+          marginTop: -50,
+          marginBottom: 20,
+          opacity: 0.5,
+        }}
+      />
+      <Text
+        style={[Fonts.bigTitle, { color: Colors.header, textAlign: "center" }]}>
+        {"YEDİEMİN OTOPARK "}
       </Text>
       <Text
         style={[
@@ -79,6 +96,8 @@ export default function LoginScreen() {
             placeholder="Kullanıcı adınızı giriniz"
             placeholderTextColor={Colors.placeholder}
             style={GlobalStyles.inputs}
+            value={username}
+            onChangeText={setUsername}
           />
         </View>
         {/* Şifre */}
@@ -98,6 +117,8 @@ export default function LoginScreen() {
             placeholderTextColor={Colors.placeholder}
             secureTextEntry={true} // Şifreyi gizler (****)
             style={GlobalStyles.inputs}
+            value={password}
+            onChangeText={setPassword}
           />
         </View>
         {/*Giriş Butonu*/}
@@ -108,7 +129,8 @@ export default function LoginScreen() {
               fontWeight: "bold",
               fontSize: 14,
               fontFamily: "serif",
-            }}>
+            }}
+            onPress={handleLogin}>
             GİRİŞ YAP
           </Text>
         </TouchableOpacity>

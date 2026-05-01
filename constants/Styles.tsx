@@ -29,4 +29,9 @@ export const GlobalStyles = StyleSheet.create({
   content: {
     color: Colors.white,
   },
+  navIcons: {
+    padding: 5,
+    opacity: 0.7,
+    color: "white",
+  },
 });

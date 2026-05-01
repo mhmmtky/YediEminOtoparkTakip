@@ -1,33 +1,39 @@
+import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons"; // Expo'nun hazır ikonları
 import React from "react";
 import {
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export const Navbar = () => {
   return (
     <View style={styles.container}>
-      {/* Sol Taraf: Menü İkonu (Gelecekte soldan menü açmak için) */}
-      <TouchableOpacity
-        style={styles.iconButton}
-        onPress={() => console.log("Menü açılacak kanka")}>
-        <Ionicons name="menu-outline" size={26} color="white" />
-      </TouchableOpacity>
+      <Image
+        source={require("@/assets/images/logo.png")}
+        style={{
+          width: 50,
+          height: 37,
+          resizeMode: "contain",
+          opacity: 0.5,
+          marginRight: "5%",
+        }}
+      />
 
-      {/* Orta Taraf: Ana Başlık */}
       <View style={styles.titleContainer}>
-        <Text style={styles.titleMain}>YEDİEMİN OTOPARK</Text>
-        <Text style={styles.titleSub}>TAKİP SİSTEMİ</Text>
+        <View style={{ alignItems: "center" }}>
+          <Text style={styles.titleMain}>YEDİEMİN OTOPARK</Text>
+          <Text style={styles.titleSub}>TAKİP SİSTEMİ</Text>
+        </View>
       </View>
 
-      {/* Sağ Taraf: Profil İkonu (Gelecekte profil sayfasını açmak için) */}
       <TouchableOpacity
         style={styles.iconButton}
-        onPress={() => console.log("Profil açılacak kanka")}>
+        onPress={() => console.log("Profil")}>
         <Ionicons name="person-circle-outline" size={26} color="white" />
       </TouchableOpacity>
     </View>
@@ -36,28 +42,27 @@ export const Navbar = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row", // Elemanları yan yana dizer
-    alignItems: "center", // Dikeyde ortalar
-    justifyContent: "space-between", // Sol, orta, sağ arası boşluk bırakır
-    backgroundColor: "transparent", // Arka plan saydam (renksiz)
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: Colors.bars,
     width: "100%",
     paddingHorizontal: 15,
-    // Çentikli (Notch) telefonlar için güvenli alan bırakır
     paddingTop: Platform.OS === "ios" ? 50 : 40,
     paddingBottom: 15,
-    // Alt kısıma çok hafif bir ayraç çizgisi
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255, 255, 255, 0.05)",
   },
   titleContainer: {
-    alignItems: "center", // Başlıkları kendi içinde ortalar
+    flexDirection: "row",
+    alignItems: "center",
   },
   titleMain: {
     color: "white",
     fontSize: 16,
-    fontWeight: "900", // Çok kalın
-    letterSpacing: 1.5, // Harf arası boşluk (kurumsal durur)
-    opacity: 0.9, // Hafif saydamlık
+    fontWeight: "900",
+    letterSpacing: 1.5,
+    opacity: 0.9,
   },
   titleSub: {
     color: "white",
