@@ -42,6 +42,7 @@ export default function LoginScreen() {
         ]}>
         TAKİP SİSTEMİ
       </Text>
+
       <View
         style={{
           alignItems: "center",
