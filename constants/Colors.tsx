@@ -8,4 +8,5 @@ export const Colors = {
   error: "#FF0000",
   success: "#4BB543",
   bars: "#000000",
+  system: "#a1a1a1",
 };

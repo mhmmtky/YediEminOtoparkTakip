@@ -14,11 +14,9 @@ export default function RootLayout() {
 
         if (session) {
           // Eğer çekmecede veri varsa, kullanıcıyı içeri al
-          console.log("Oturum bulundu, yönlendiriliyor...");
           router.replace("/(tabs)/dashboard");
         } else {
           // Veri yoksa login ekranında kalsın (veya oraya yönlendir)
-          console.log("Oturum yok, login bekleniyor.");
           router.replace("/");
         }
       } catch (e) {

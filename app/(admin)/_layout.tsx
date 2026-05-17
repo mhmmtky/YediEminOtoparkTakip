@@ -1,4 +1,4 @@
-import { AppNavigator } from "@/components/AppNavigator";
+import { AdminAppNavigator } from "@/components/AdminAppNavigator";
 import { Navbar } from "@/components/Navbar";
 import { Colors } from "@/constants/Colors";
 import { Tabs } from "expo-router";
@@ -16,16 +16,13 @@ export default function TabsLayout() {
           tabBarStyle: { display: "none" },
           sceneStyle: { backgroundColor: Colors.background },
         }}>
-        <Tabs.Screen name="addCar" />
-        <Tabs.Screen name="archive" />
-        <Tabs.Screen name="dashboard" />
-        <Tabs.Screen name="deleteCar" />
-        <Tabs.Screen name="detailCar" />
-        <Tabs.Screen name="find" />
-        <Tabs.Screen name="maps" />
-        <Tabs.Screen name="accDetail" />
+        <Tabs.Screen name="addUser" />
+        <Tabs.Screen name="manageUser" />
+        <Tabs.Screen name="parkingSettings" />
+        <Tabs.Screen name="reports" />
+        <Tabs.Screen name="systemLogs" />
       </Tabs>
-      <AppNavigator />
+      <AdminAppNavigator />
     </View>
   );
 }

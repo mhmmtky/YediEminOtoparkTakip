@@ -16,6 +16,7 @@ export const setupDB = () => {
             username TEXT UNIQUE,
             password TEXT,
             role TEXT,
+            personal_number TEXT,
             status,
             created_at
         );
@@ -81,6 +82,20 @@ export const setupDB = () => {
       );
     `);
 
+    {
+      /* Log tablosu */
+    }
+    db.execAsync(`
+      CREATE TABLE IF NOT EXISTS system_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        user_name TEXT,
+        action_type TEXT,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+      );
+    `);
+
     // ADMİN OLUŞTURMA
 
     const userCount = db.getFirstSync("SELECT COUNT(*) as count FROM users;");
@@ -115,18 +130,5 @@ export const setupDB = () => {
     }
   } catch (e) {
     console.error("Veritabanı kurulum hatası:", e);
-  }
-};
-
-export const loginUser = (username, password) => {
-  try {
-    const user = db.getFirstSync(
-      "SELECT * FROM users WHERE username = ? AND password = ?;",
-      [username, password],
-    );
-    return user;
-  } catch (e) {
-    console.error("LOG: Login Sorgu Hatası:", e);
-    return null;
   }
 };

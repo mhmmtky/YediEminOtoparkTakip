@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { loginUser } from "../database/db";
+import { loginUser } from "../database/userDb";
 export const useAuth = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -13,7 +13,7 @@ export const useAuth = () => {
 
   const handleLogin = async () => {
     if (!username || !password) {
-      setStatus({ msg: "Lütfen tüm alanları doldur.", type: "error" });
+      setStatus({ msg: "Lütfen tüm alanları doldurunuz.", type: "error" });
       setTimeout(() => setStatus(null), 3000); // 3 sn sonra kapat
       return;
     }

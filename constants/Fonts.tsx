@@ -25,4 +25,6 @@ export const Fonts = {
     fontSize: 12,
     lineHeight: 16,
   },
+  mainFont: "monospace",
+  expFont: "sans-serif-condensed",
 };

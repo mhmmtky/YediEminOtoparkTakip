@@ -88,7 +88,7 @@ export const Navbar = () => {
                   style={styles.menuItem}
                   onPress={() => {
                     setShowMenu(false);
-                    router.push("/");
+                    router.push("/systemLogs");
                   }}>
                   <Text style={[styles.menuText, { color: Colors.header }]}>
                     Admin Paneli
