@@ -3,7 +3,7 @@ import { db } from "./db";
 export const saveLog = async (userId, username, actionType, description) => {
   try {
     await db.runAsync(
-      `INSERT INTO system_logs (user_id, user_name, action_type, description) VALUES(?,?,?,?)`,
+      `INSERT INTO system_logs (user_id, username, action_type, description) VALUES(?,?,?,?)`,
       [userId, username, actionType, description],
     );
   } catch (e) {
@@ -24,7 +24,7 @@ export const getLogs = async (selectedDate, selectedUser) => {
 
     // Personel seçildiyse sorguya ekle
     if (selectedUser) {
-      query += ` AND user_name = ?`;
+      query += ` AND username = ?`;
       params.push(selectedUser);
     }
 

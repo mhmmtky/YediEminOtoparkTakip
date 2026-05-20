@@ -1,14 +1,16 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 export const ActionButtons = () => {
+  const router = useRouter();
   return (
     <View style={styles.container}>
       {/* Araç Giriş Butonu */}
       <TouchableOpacity
         style={[styles.button, styles.addCar]}
-        onPress={() => console.log("Giriş")}>
+        onPress={() => router.navigate("/addCar")}>
         <MaterialCommunityIcons name="car" size={36} color="#000000" />
       </TouchableOpacity>
 
@@ -19,7 +21,7 @@ export const ActionButtons = () => {
           styles.updateCar,
           { transform: [{ translateY: -15 }] },
         ]}
-        onPress={() => console.log("Güncelle")}>
+        onPress={() => router.navigate("/detailCar")}>
         <MaterialCommunityIcons
           name="square-edit-outline"
           size={36}
@@ -30,7 +32,7 @@ export const ActionButtons = () => {
       {/* Araç Çıkış Butonu */}
       <TouchableOpacity
         style={[styles.button, styles.deleteCar]}
-        onPress={() => console.log("Çıkış")}>
+        onPress={() => router.navigate("/deleteCar")}>
         <MaterialCommunityIcons name="car-off" size={36} color="#000000" />
       </TouchableOpacity>
     </View>

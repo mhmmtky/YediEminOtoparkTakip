@@ -78,7 +78,7 @@ export const Navbar = () => {
                 style={styles.menuItem}
                 onPress={() => {
                   setShowMenu(false);
-                  router.push("/");
+                  router.push("/accDetail");
                 }}>
                 <Text style={styles.menuText}>Hesap Bilgileri</Text>
               </TouchableOpacity>

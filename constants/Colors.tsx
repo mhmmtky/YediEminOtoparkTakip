@@ -9,4 +9,9 @@ export const Colors = {
   success: "#4BB543",
   bars: "#000000",
   system: "#a1a1a1",
+  logs: "#313131",
+  softGreen: "#13981ce1",
+  cardBg: "#1E1E1E",
+  gray: "#AAAAAA",
+  softRed: "#E74C3C",
 };

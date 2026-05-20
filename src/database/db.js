@@ -1,25 +1,25 @@
 import * as SQLite from "expo-sqlite";
+import { hashPassword } from "../services/hashPassword";
 
 export const db = SQLite.openDatabaseSync("yediemin.db");
 
-export const setupDB = () => {
+export const setupDB = async () => {
   try {
     db.execSync("PRAGMA foreign_keys = ON;");
     {
       /* Kullanıcılar tablosu */
     }
-    db.execSync(`
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            surname TEXT,    
-            username TEXT UNIQUE,
-            password TEXT,
-            role TEXT,
-            personal_number TEXT,
-            status,
-            created_at
-        );
+    db.execSync(`CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      surname TEXT,    
+      username TEXT UNIQUE,
+      password TEXT,
+      role TEXT,
+      personal_number TEXT,
+      status TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+      );
     `);
     {
       /* Araçlar tablosu */
@@ -34,10 +34,11 @@ export const setupDB = () => {
             year INTEGER,          
             is_paid INTEGER DEFAULT 0,
             category_id INTEGER,
+            personal_id INTEGER,
             owner_id INTEGER,        
-            status TEXT,           
-            entry_date TEXT,       
-            exit_date TEXT         
+            status TEXT DEFAULT 'inside',           
+            entry_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      
+            exit_date TIMESTAMP         
         );
     `);
 
@@ -62,7 +63,7 @@ export const setupDB = () => {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             full_name TEXT,
             phone TEXT,
-            tc_no TEXT UNIQUE -- Yasal takip için tc no iyidir
+            tc_no TEXT UNIQUE 
         );
     `);
 
@@ -75,7 +76,7 @@ export const setupDB = () => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         block TEXT,           -- A, B, C...
         number INTEGER,       -- 1, 2, 3...
-        slot_code TEXT UNIQUE, -- A-1, A-2... (Hızlı arama için)
+        slot_code TEXT UNIQUE, -- A-1, A-2... 
         is_full INTEGER DEFAULT 0,
         car_id INTEGER,
         FOREIGN KEY (car_id) REFERENCES cars (id)
@@ -85,11 +86,10 @@ export const setupDB = () => {
     {
       /* Log tablosu */
     }
-    db.execAsync(`
-      CREATE TABLE IF NOT EXISTS system_logs (
+    db.execAsync(`CREATE TABLE IF NOT EXISTS system_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
-        user_name TEXT,
+        username TEXT,
         action_type TEXT,
         description TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
@@ -102,10 +102,11 @@ export const setupDB = () => {
 
     if (userCount.count === 0) {
       console.log("Admin hesabı oluşturuluyor...");
+      const psw = await hashPassword("1234");
       db.runSync(
-        `INSERT INTO users (name, surname, username, password, role, status, created_at) 
-     VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'));`,
-        ["Muhammet", "Kaya", "mhmmt", "1234", "admin", "active"],
+        `INSERT INTO users (name, surname, username, password, personal_number, role, status, created_at) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'));`,
+        ["admin", "admin", "admin", psw, "2026001", "admin", "active"],
       );
     }
 
