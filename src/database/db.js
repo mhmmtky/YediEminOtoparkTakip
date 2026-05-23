@@ -36,7 +36,8 @@ export const setupDB = async () => {
             category_id INTEGER,
             personal_id INTEGER,
             owner_id INTEGER,        
-            status TEXT DEFAULT 'inside',           
+            status TEXT DEFAULT 'inside', 
+            park_id INTEGER UNIQUE,          
             entry_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      
             exit_date TIMESTAMP         
         );
@@ -131,5 +132,29 @@ export const setupDB = async () => {
     }
   } catch (e) {
     console.error("Veritabanı kurulum hatası:", e);
+  }
+
+  const categoryCount = db.getFirstSync(
+    "SELECT COUNT(*) as count FROM categories;",
+  );
+  if (categoryCount.count === 0) {
+    console.log("Araç kategorileri yükleniyor...");
+
+    const defaultCategories = [
+      { name: "Otomobil", price: 150.0 },
+      { name: "Motosiklet", price: 75.0 },
+      { name: "Hafif Ticari", price: 200.0 },
+      { name: "Ticari", price: 400.0 },
+      { name: "İş Makinesi", price: 500.0 },
+      { name: "Çeici & Dorse", price: 1000.0 },
+    ];
+
+    for (const cat of defaultCategories) {
+      db.runSync("INSERT INTO categories (name, daily_price) VALUES (?, ?);", [
+        cat.name,
+        cat.price,
+      ]);
+    }
+    console.log("Kategoriler başarıyla oluşturuldu! ");
   }
 };

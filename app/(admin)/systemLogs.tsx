@@ -49,8 +49,6 @@ export default function SystemLogsScreen() {
     try {
       setLoading(true);
 
-      const LogService = require("@/src/services/logs").default;
-
       const data = await fetchLogs({ selectedDate, selectedUser });
       setLogs(data || []);
     } catch (e) {

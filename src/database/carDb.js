@@ -1,0 +1,71 @@
+import { db } from "./db";
+
+export const saveCar = async (carData) => {
+  const {
+    brand,
+    model,
+    plate,
+    mileage,
+    year,
+    category_id,
+    personal_id,
+    park_id,
+  } = carData;
+
+  try {
+    const result = await db.runAsync(
+      `INSERT INTO cars (brand, model, plate, mileage, year, category_id, owner_id, personal_id, park_id) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      [
+        brand,
+        model,
+        plate.toUpperCase().trim(),
+        mileage,
+        year,
+        category_id,
+        null,
+        personal_id,
+        park_id,
+      ],
+    );
+
+    return result;
+  } catch (e) {
+    console.error("SQL Katmanında saveCar hatası:", e);
+    return false;
+  }
+};
+
+export const getAllCar = async () => {
+  try {
+    const sql = `SELECT c.id, c.brand, c.model, c.plate, c.mileage, c.year, c.is_paid, c.entry_date, c.exit_date, c.category_id, c.personal_id, c.park_id, cate.name AS category_name, cate.daily_price AS category_price, u.name AS personal_name, u.surname AS personal_surname, u.username AS personal_username, ps.slot_code AS car_slot FROM cars c 
+      LEFT JOIN categories cate ON c.category_id = cate.id 
+      LEFT JOIN users u ON c.personal_id = u.id 
+      LEFT JOIN parking_slots ps ON c.park_id = ps.id 
+      WHERE c.status = ? `;
+    const rows = await db.getAllAsync(sql, ["inside"]);
+    console.log("servise gönderiliyor.");
+    return rows;
+  } catch (e) {
+    console.error(`CarDb SQL Katmanında Araçlar çekilirken hata oluştu: `, e);
+    return [];
+  }
+};
+
+export const updateCarInfoById = async (carData) => {
+  try {
+    const { brand, model, slot, id } = carData;
+    const sql = `UPDATE cars SET brand = ?, model = ?, park_id = ? WHERE id = ?`;
+    const result = await db.runAsync(sql, [
+      brand,
+      model,
+      Number(slot),
+      Number(id),
+    ]);
+
+    return result;
+  } catch (e) {
+    console.error("SQL Katmanında saveCar hatası:", e);
+    return false;
+  }
+};

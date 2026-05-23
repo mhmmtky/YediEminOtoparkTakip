@@ -1,8 +1,14 @@
-import StatusCard from "@/components/StatusCard"; // 🎯 Senin canavar animasyonlu kart amk
+import StatusCard from "@/components/StatusCard";
 import { Colors } from "@/constants/Colors";
 import { Fonts } from "@/constants/Fonts";
+import { handleAddCar } from "@/src/services/carService";
+import { handleGetCategories } from "@/src/services/categoryService";
+import {
+  handleGetBlocks,
+  handleGetEmptySlotsByBlock,
+} from "@/src/services/parkingService";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -13,21 +19,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Dropdown } from "react-native-element-dropdown";
 
 export default function AddCarScreen() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState({
-    id: 1,
-    name: "Otomobil",
-  });
-
-  const categories = [
-    { id: 1, name: "Otomobil" },
-    { id: 2, name: "Motosiklet" },
-    { id: 3, name: "Hafif Ticari" },
-    { id: 4, name: "Ticari(Ekskavatör vb.)" },
-    { id: 5, name: "Tır" },
-  ];
+  const [selectedCategory, setSelectedCategory] = useState<any>({});
+  const [categories, setCategories] = useState<
+    { id: number; name: string; daily_price?: number }[]
+  >([]);
 
   const [plate, setPlate] = useState("");
   const [brand, setBrand] = useState("");
@@ -35,34 +34,147 @@ export default function AddCarScreen() {
   const [mileage, setMileage] = useState("");
   const [year, setYear] = useState("");
 
+  const [blockDropdownOpen, setBlockDropdownOpen] = useState(false);
+  const [blocksList, setBlocksList] = useState<string[]>([]);
+  const [selectedBlock, setSelectedBlock] = useState<string>("");
+
+  // SLOT NUMARASI SEÇİMİ STATELERİ
+  const [slotDropdownOpen, setSlotDropdownOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<any>(null);
+  const [freeSlotsInBlock, setFreeSlotsInBlock] = useState<
+    { id: number; number: number; slot_code: string }[]
+  >([]);
+
   const [status, setStatus] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
 
-  const onAddCarPress = () => {
+  // Veritabanından Kategorileri Çeker
+  const loadCategoriesFromDB = async () => {
+    try {
+      const data = await handleGetCategories();
+      setCategories(data || []);
+
+      if (data && data.length > 0) {
+        setSelectedCategory({ id: data[0].id, name: data[0].name });
+      }
+    } catch (e) {
+      console.error("Kategoriler ekrana basılırken hata: ", e);
+    }
+  };
+
+  // Blokları Doldurur
+  const loadParkingData = async () => {
+    try {
+      const blocks = await handleGetBlocks();
+      setBlocksList(blocks || []);
+
+      if (blocks && blocks.length > 0) {
+        setSelectedBlock(blocks[0]);
+      }
+    } catch (e) {
+      console.error("Bloklar yüklenirken hata oluştu: ", e);
+    }
+  };
+
+  // Slotları Doldurur
+  const loadFreeSlots = async (blockName: string) => {
+    if (!blockName) return;
+    try {
+      const slots = await handleGetEmptySlotsByBlock(blockName);
+      setFreeSlotsInBlock(slots || []);
+    } catch (e) {
+      console.error(
+        `${blockName} bloğunun slotları çekilirken hata oluştu: `,
+        e,
+      );
+    }
+  };
+
+  useEffect(() => {
+    loadCategoriesFromDB();
+    loadParkingData();
+  }, []);
+
+  useEffect(() => {
+    loadFreeSlots(selectedBlock);
+  }, [selectedBlock]);
+
+  const onAddCarPress = async () => {
     if (!plate.trim()) {
+      setStatus({ message: "Lütfen araç plakasını giriniz!", type: "error" });
+      setTimeout(() => setStatus(null), 3000);
+      return;
+    }
+
+    if (!selectedSlot) {
       setStatus({
-        message: "Lütfen araç plakasını giriniz!",
+        message: "Lütfen bir park slotu seçiniz kanka!",
         type: "error",
       });
       setTimeout(() => setStatus(null), 3000);
       return;
     }
 
-    setStatus({
-      message: `${plate.toUpperCase()} plakalı araç otoparka kabul eidldi!`,
-      type: "success",
-    });
+    try {
+      const response = await handleAddCar({
+        brand: brand,
+        model: model,
+        plate: plate,
+        mileage: mileage,
+        year: year,
+        category_id: selectedCategory,
+        park_id: selectedSlot.id,
+      });
 
-    setPlate("");
-    setBrand("");
-    setModel("");
-    setMileage("");
-    setYear("");
+      if (response && response.success) {
+        setStatus({
+          message: `${plate.toUpperCase()} plakalı araç ${selectedSlot.slot_code} konumuna başarıyla kabul edildi!`,
+          type: "success",
+        });
+
+        setPlate("");
+        setBrand("");
+        setModel("");
+        setMileage("");
+        setYear("");
+        setSelectedSlot(null);
+
+        if (typeof loadFreeSlots === "function") {
+          loadFreeSlots(selectedBlock);
+        }
+      } else {
+        setStatus({
+          message:
+            response?.error || "Araç kaydedilirken veritabanı hatası oluştu!",
+          type: "error",
+        });
+      }
+    } catch (e) {
+      console.error("Ön yüzde buton tetiklenirken hat aoluştu: ", e);
+      setStatus({ message: "Sistemsel bir hata oluştu!", type: "error" });
+    }
 
     setTimeout(() => setStatus(null), 3000);
   };
+
+  const formattedCategories = categories.map((cat) => ({
+    label: cat.name,
+    value: cat.id,
+    original: cat,
+  }));
+
+  const formattedBlocks = blocksList.map((bl) => ({
+    label: `${bl} Bloğu`,
+    value: bl,
+  }));
+
+  const formattedSlots = freeSlotsInBlock.map((slot) => ({
+    label: `Slot ${slot.number}`,
+    value: slot.id,
+    original: slot,
+  }));
 
   return (
     <KeyboardAvoidingView
@@ -72,7 +184,8 @@ export default function AddCarScreen() {
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
         <Text style={styles.headerTitle}>Araç Kabul</Text>
         <Text style={styles.subtitle}>
           Yediemin otoparkına alınan aracın detaylarını eksiksiz giriniz.
@@ -95,9 +208,9 @@ export default function AddCarScreen() {
               ]}
               value={plate}
               onChangeText={setPlate}
-              placeholder="Örn: 34 MAMI 508"
-              placeholderTextColor={Colors.gray}
-              autoCapitalize="characters" // Otomatik büyük harf
+              placeholder="41 L 4172"
+              placeholderTextColor={Colors.placeholder}
+              autoCapitalize="characters"
             />
           </View>
 
@@ -114,8 +227,8 @@ export default function AddCarScreen() {
               style={styles.input}
               value={brand}
               onChangeText={setBrand}
-              placeholder="Örn: Peugeot"
-              placeholderTextColor={Colors.gray}
+              placeholder="Mercedes-Benz"
+              placeholderTextColor={Colors.placeholder}
             />
           </View>
 
@@ -132,12 +245,12 @@ export default function AddCarScreen() {
               style={styles.input}
               value={model}
               onChangeText={setModel}
-              placeholder="Örn: 508 GT"
-              placeholderTextColor={Colors.gray}
+              placeholder="CLA 180"
+              placeholderTextColor={Colors.placeholder}
             />
           </View>
 
-          {/* Kilometre (Mileage) */}
+          {/* Kilometre */}
           <Text style={styles.fieldLabel}>Kilometre (KM)</Text>
           <View style={styles.inputWrapper}>
             <Ionicons
@@ -150,13 +263,13 @@ export default function AddCarScreen() {
               style={styles.input}
               value={mileage}
               onChangeText={setMileage}
-              placeholder="Örn: 45000"
-              placeholderTextColor={Colors.gray}
+              placeholder="45000"
+              placeholderTextColor={Colors.placeholder}
               keyboardType="numeric"
             />
           </View>
 
-          {/* Araç Yılı (Year) */}
+          {/* Araç Yılı */}
           <Text style={styles.fieldLabel}>Araç Model Yılı</Text>
           <View style={styles.inputWrapper}>
             <Ionicons
@@ -169,77 +282,105 @@ export default function AddCarScreen() {
               style={styles.input}
               value={year}
               onChangeText={setYear}
-              placeholder="Örn: 2024"
-              placeholderTextColor={Colors.gray}
+              placeholder="2024"
+              placeholderTextColor={Colors.placeholder}
               keyboardType="numeric"
               maxLength={4}
             />
           </View>
         </View>
-        <Text style={styles.fieldLabel}>Araç Kategorisi *</Text>
-        <View style={styles.dropdownContainer}>
-          <TouchableOpacity
-            style={styles.dropdownHeader}
-            onPress={() => setDropdownOpen(!dropdownOpen)}
-            activeOpacity={0.8}>
-            <View style={styles.dropdownHeaderLeft}>
-              <Ionicons
-                name="layers-outline"
-                size={18}
-                color={Colors.primary}
-                style={styles.inputIcon}
-              />
-              <Text style={styles.dropdownSelectedText}>
-                {selectedCategory.name}
-              </Text>
-            </View>
-            <Ionicons
-              name={dropdownOpen ? "chevron-up" : "chevron-down"}
-              size={18}
-              color={Colors.gray}
-            />
-          </TouchableOpacity>
 
-          {/* Liste Açık Olduğunda Aşağı Dökülecek Elemanlar amk */}
-          {dropdownOpen && (
-            <View style={styles.dropdownList}>
-              {categories.map((cat) => (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={[
-                    styles.dropdownItem,
-                    selectedCategory.id === cat.id && styles.dropdownItemActive,
-                  ]}
-                  onPress={() => {
-                    setSelectedCategory(cat);
-                    setDropdownOpen(false); // Seçince kapat kanka
-                  }}>
-                  <Text
-                    style={[
-                      styles.dropdownItemText,
-                      selectedCategory.id === cat.id && {
-                        color: Colors.softGreen,
-                        fontWeight: "bold",
-                      },
-                    ]}>
-                    {cat.name}
-                  </Text>
-                  {selectedCategory.id === cat.id && (
-                    <Ionicons
-                      name="checkmark"
-                      size={16}
-                      color={Colors.softGreen}
-                    />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
+        {/* Araç Kategorisi Dropdown */}
+        <Text style={styles.fieldLabel}>Araç Kategorisi</Text>
+        <Dropdown
+          style={styles.dropdown}
+          placeholderStyle={styles.placeholderStyle}
+          selectedTextStyle={styles.selectedTextStyle}
+          containerStyle={styles.dropdownContainerStyle}
+          activeColor="rgba(222, 255, 154, 0.05)"
+          itemTextStyle={{ color: Colors.white }}
+          data={formattedCategories}
+          labelField="label"
+          valueField="value"
+          placeholder="Kategori Seç..."
+          value={selectedCategory?.id}
+          onChange={(item) => {
+            setSelectedCategory(item.original);
+          }}
+          renderLeftIcon={() => (
+            <Ionicons
+              name="layers-outline"
+              size={18}
+              color={Colors.primary}
+              style={{ marginRight: 10 }}
+            />
           )}
+        />
+
+        {/* Park Bilgileri */}
+        <Text style={styles.fieldLabel}>Park Bilgileri </Text>
+        <View style={styles.rowContainer}>
+          <View style={{ flex: 1 }}>
+            <Dropdown
+              style={styles.dropdown}
+              placeholderStyle={styles.placeholderStyle}
+              selectedTextStyle={styles.selectedTextStyle}
+              containerStyle={styles.dropdownContainerStyle}
+              activeColor="rgba(222, 255, 154, 0.05)"
+              itemTextStyle={{ color: Colors.white }}
+              data={formattedBlocks}
+              labelField="label"
+              valueField="value"
+              placeholder="Blok Seç..."
+              value={selectedBlock}
+              onChange={(item) => {
+                setSelectedBlock(item.value);
+                setSelectedSlot(null);
+              }}
+              renderLeftIcon={() => (
+                <Ionicons
+                  name="grid-outline"
+                  size={16}
+                  color={Colors.primary}
+                  style={{ marginRight: 10 }}
+                />
+              )}
+            />
+          </View>
+
+          <View style={{ width: 10 }} />
+
+          <View style={{ flex: 1 }}>
+            <Dropdown
+              style={styles.dropdown}
+              placeholderStyle={styles.placeholderStyle}
+              selectedTextStyle={styles.selectedTextStyle}
+              containerStyle={styles.dropdownContainerStyle}
+              activeColor="rgba(222, 255, 154, 0.05)"
+              itemTextStyle={{ color: Colors.white }}
+              data={formattedSlots}
+              labelField="label"
+              valueField="value"
+              placeholder="Slot Seç..."
+              value={selectedSlot?.id}
+              onChange={(item) => {
+                setSelectedSlot(item.original);
+              }}
+              renderLeftIcon={() => (
+                <Ionicons
+                  name="location-outline"
+                  size={16}
+                  color={Colors.softGreen}
+                  style={{ marginRight: 10 }}
+                />
+              )}
+            />
+          </View>
         </View>
 
         {/* Aracı Kabul Et Butonu */}
         <TouchableOpacity style={styles.submitButton} onPress={onAddCarPress}>
-          <Text style={styles.submitButtonText}>ARACI OTOPARKA AL</Text>
+          <Text style={styles.submitButtonText}>ARAÇ KAYDINI TAMMALA</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -254,7 +395,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   headerTitle: {
     fontSize: 26,
@@ -307,7 +448,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 20,
     elevation: 2,
   },
   submitButtonText: {
@@ -317,57 +458,34 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mainFont,
     letterSpacing: 0.5,
   },
-  dropdownContainer: {
+  rowContainer: {
+    flexDirection: "row",
     width: "100%",
     marginBottom: 15,
-    position: "relative",
-    zIndex: 50, // Açıldığında alttaki elemanların üstüne binsin amk
   },
-  dropdownHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: Colors.cardBg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 8,
+  //Dropdown style:
+  dropdown: {
     height: 48,
+    borderColor: Colors.border,
+    borderWidth: 1,
+    borderRadius: 8,
     paddingHorizontal: 12,
+    backgroundColor: Colors.cardBg,
+    marginBottom: 15,
   },
-  dropdownHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  dropdownSelectedText: {
-    color: Colors.white,
+  placeholderStyle: {
     fontSize: 14,
+    color: Colors.placeholder,
     fontFamily: Fonts.expFont,
   },
-  dropdownList: {
+  selectedTextStyle: {
+    fontSize: 14,
+    color: Colors.white,
+    fontFamily: Fonts.expFont,
+  },
+  dropdownContainerStyle: {
     backgroundColor: Colors.cardBg,
-    borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: 8,
-    marginTop: 5,
-    paddingVertical: 5,
-    // Android gölgesi amk
-    elevation: 4,
-  },
-  dropdownItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.05)",
-  },
-  dropdownItemActive: {
-    backgroundColor: "rgba(222, 255, 154, 0.05)", // Seçili olana hafif ton geç kanka
-  },
-  dropdownItemText: {
-    color: Colors.white,
-    fontSize: 14,
-    fontFamily: Fonts.expFont,
   },
 });

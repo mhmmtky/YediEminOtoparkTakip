@@ -120,7 +120,7 @@ export const handleGetUsers = async () => {
 
     return formattedUsers; // Arayüze listeyi dön
   } catch (e) {
-    console.error("getUserService Katmanında hata::", e);
+    console.error("getUserService Katmanında hata:", e);
     return [];
   }
 };
@@ -152,7 +152,7 @@ export const handleUpdateUser = async (userData) => {
       hashedPassword,
     );
     if (!dbSuccess) {
-      return { success: false, message: "Veritabanı güncelleme hatası amk!" };
+      return { success: false, message: "Veritabanı güncelleme hatası!" };
     }
 
     const logData = {
