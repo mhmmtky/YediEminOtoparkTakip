@@ -1,6 +1,7 @@
 import {
   getBlocks,
   getEmptySlotsByBlock,
+  getParkCount,
   getParkInfoByCarId,
   getParkInfoByIdSql,
   savePark,
@@ -84,5 +85,18 @@ export const handleUpdateParkInfoById = async (parkId) => {
       "Serivis Katmanında handleUpdateParkInfoById fonksiyonunda Park Bilgileri güncellenirken hata oluştu: " +
         e,
     );
+  }
+};
+
+export const handleGetParkCount = async () => {
+  try {
+    const count = await getParkCount();
+    return count[0].count;
+  } catch (e) {
+    console.log(
+      "Serivis Katmanında handleGetParkCount fonksiyonunda Park sayısı hesaplanırken hata oluştu: " +
+        e,
+    );
+    return 0;
   }
 };

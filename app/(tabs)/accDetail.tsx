@@ -1,7 +1,10 @@
 import StatusCard from "@/components/StatusCard";
 import { Colors } from "@/constants/Colors";
 import { Fonts } from "@/constants/Fonts";
-import { handleUpdateUser } from "@/src/services/userService";
+import {
+  handleGetUserById,
+  handleUpdateUser,
+} from "@/src/services/userService";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
@@ -13,11 +16,10 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 
 export default function accDetail() {
-  // status card
   const [status, setStatus] = useState<{
     message: string;
     type: "success" | "error";
@@ -25,7 +27,7 @@ export default function accDetail() {
 
   const [userId, setUserId] = useState<string>("");
 
-  //  Form Elemanlarının Stateleri
+  // Form Elemanlarının Stateleri
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [username, setUsername] = useState("");
@@ -33,32 +35,61 @@ export default function accDetail() {
 
   // Değiştirilemez Statik Veriler
   const [personalNumber, setPersonalNumber] = useState("");
-  const [role, setRole] = useState("Personel");
+  const [role, setRole] = useState("PERSONEL");
 
-  useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        const sessionData = await AsyncStorage.getItem("@user_session");
-        if (sessionData !== null) {
-          const parsedUser = JSON.parse(sessionData);
+  const loadUserData = async () => {
+    try {
+      const sessionData = await AsyncStorage.getItem("@user_session");
+      if (sessionData !== null) {
+        const parsedUser = JSON.parse(sessionData);
 
-          // Stateleri user bilgileriyle doldur
-          setUserId(parsedUser.id.toString());
+        const currentId = parsedUser.id.toString();
+        setUserId(currentId);
+
+        const liveDataResult = await handleGetUserById(parsedUser.id);
+
+        let liveUserData: any = null;
+        if (liveDataResult) {
+          liveUserData = Array.isArray(liveDataResult)
+            ? liveDataResult[0]
+            : liveDataResult;
+        }
+
+        if (liveUserData && (liveUserData.name || liveUserData.username)) {
+          setName(liveUserData.name || "");
+          setSurname(liveUserData.surname || "");
+          setUsername(liveUserData.username || "");
+          setPersonalNumber(liveUserData.personal_number || "---");
+          setRole(
+            liveUserData.role ? liveUserData.role.toUpperCase() : "PERSONEL",
+          );
+        } else {
           setName(parsedUser.name || "");
           setSurname(parsedUser.surname || "");
           setUsername(parsedUser.username || "");
           setPersonalNumber(parsedUser.personal_number || "---");
           setRole(parsedUser.role ? parsedUser.role.toUpperCase() : "PERSONEL");
         }
-      } catch (error) {
-        console.error("Profil yüklenirken session okunamadı:", error);
       }
-    };
+    } catch (error) {
+      console.error("Profil yüklenirken session veya DB okunamadı:", error);
+    }
+  };
 
+  useEffect(() => {
     loadUserData();
   }, []);
 
   const onSaveProfile = async () => {
+    if (!name.trim() || !surname.trim() || !username.trim()) {
+      setStatus({
+        message: "Lütfen boş alan bırakmayınız!",
+        type: "error",
+      });
+      setTimeout(() => setStatus(null), 3000);
+      return;
+    }
+
     const userData = {
       id: userId,
       name: name,
@@ -69,15 +100,17 @@ export default function accDetail() {
 
     const result = await handleUpdateUser(userData);
 
-    if (result.success) {
-      setStatus({ message: result.msg || "İşlem başarılı!", type: "success" });
+    if (result && result.success) {
+      setStatus({
+        message: "Profil bilgileriniz başarıyla güncellendi!",
+        type: "success",
+      });
 
       setTimeout(() => {
         setStatus(null);
       }, 3000);
       setPassword("");
 
-      // AsyncStoragedeki verileri yeni verilerle değiştir
       const sessionData = await AsyncStorage.getItem("@user_session");
       if (sessionData !== null) {
         const parsedUser = JSON.parse(sessionData);
@@ -92,8 +125,16 @@ export default function accDetail() {
           JSON.stringify(updatedSession),
         );
       }
+
+      loadUserData();
     } else {
-      setStatus({ message: result.msg || "HATA", type: "error" });
+      setStatus({
+        message: result?.msg || "Güncelleme yapılırken bir sorun oluştu!",
+        type: "error",
+      });
+      setTimeout(() => {
+        setStatus(null);
+      }, 3000);
     }
   };
 
@@ -125,7 +166,7 @@ export default function accDetail() {
             </View>
           </View>
 
-          {/* */}
+          {/* Sistem Yetkisi */}
           <View style={styles.lockedInputWrapper}>
             <Ionicons
               name="shield-checkmark-outline"
@@ -140,11 +181,11 @@ export default function accDetail() {
           </View>
         </View>
 
-        {/* DÜZENLENEBİLİR ALANLAR SEKSİYONU */}
+        {/* DÜZENLENEBİLİR ALANLAR */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Kişisel Bilgiler</Text>
 
-          {/* Ad İntput */}
+          {/* Ad Input */}
           <Text style={styles.fieldLabel}>Ad</Text>
           <View style={styles.inputWrapper}>
             <Ionicons
@@ -231,32 +272,15 @@ export default function accDetail() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 140,
-  },
+  container: { flex: 1, backgroundColor: Colors.background },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 140 },
   headerTitle: {
     fontSize: 26,
     fontWeight: "bold",
     color: Colors.white,
     fontFamily: Fonts.mainFont,
   },
-  subtitle: {
-    fontSize: 14,
-    color: Colors.gray,
-    marginTop: 5,
-    marginBottom: 25,
-    fontFamily: Fonts.expFont,
-  },
-  sectionContainer: {
-    width: "100%",
-    marginBottom: 20,
-  },
+  sectionContainer: { width: "100%", marginBottom: 20 },
   sectionTitle: {
     fontSize: 15,
     fontWeight: "bold",
@@ -273,7 +297,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mainFont,
     fontWeight: "600",
   },
-
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -285,9 +308,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 15,
   },
-  inputIcon: {
-    marginRight: 10,
-  },
+  inputIcon: { marginRight: 10 },
   input: {
     flex: 1,
     color: Colors.white,
@@ -295,7 +316,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.expFont,
     height: "100%",
   },
-
   lockedInputWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -308,14 +328,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     opacity: 0.75,
   },
-  lockedTextContainer: {
-    flex: 1,
-  },
-  inputLabel: {
-    color: Colors.gray,
-    fontSize: 11,
-    fontFamily: Fonts.mainFont,
-  },
+  lockedTextContainer: { flex: 1 },
+  inputLabel: { color: Colors.gray, fontSize: 11, fontFamily: Fonts.mainFont },
   lockedValueText: {
     color: Colors.softGreen,
     fontSize: 14,
@@ -323,7 +337,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.expFont,
     marginTop: 2,
   },
-  // Buton
   updateButton: {
     backgroundColor: Colors.primary,
     height: 50,

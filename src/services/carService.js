@@ -1,7 +1,18 @@
-import { getAllCar, saveCar, updateCarInfoById } from "@/src/database/carDb";
+import {
+  deleteCarById,
+  getAddedCarCount,
+  getAllCar,
+  getCarCount,
+  getPrices,
+  getReleasedCarCount,
+  getReleasedCars,
+  saveCar,
+  updateCarInfoById,
+} from "@/src/database/carDb";
 import { db } from "@/src/database/db";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LogService from "./logs";
+import { handleAddOwner } from "./ownerService";
 import {
   getParkInfoById,
   handleGetParkInfoByCarId,
@@ -9,6 +20,7 @@ import {
   handleUpdateParkInfoById,
 } from "./parkingService";
 
+// --------- ARAÇ KAYDETME
 export const handleAddCar = async (fCarData) => {
   const {
     brand,
@@ -94,6 +106,7 @@ export const handleAddCar = async (fCarData) => {
   }
 };
 
+// ------- ARAÇLARI GETİRME
 export const handleGetAllCar = async () => {
   try {
     const cars = await getAllCar();
@@ -111,7 +124,7 @@ export const handleGetAllCar = async () => {
 export const handleUpdateCarInfoById = async (carData) => {
   const { id, brand, model, blockName, slot, park_id, plate } = carData;
   const parkInfo = await handleGetParkInfoByCarId(id);
-  let success = null;
+  let success = { msg: "İşlem başlatılamadı", success: false };
   const sessionData = await AsyncStorage.getItem("@user_session");
 
   let personal_id = null;
@@ -126,7 +139,7 @@ export const handleUpdateCarInfoById = async (carData) => {
     await db.withTransactionAsync(async () => {
       if (!brand || !model || !blockName || !slot) {
         success = { msg: "Lütfen boş alanlar doldurunuz!", success: false };
-        return success;
+        throw new Error("Empty Data");
       }
       const result = await updateCarInfoById(carData);
       if (!result) {
@@ -134,7 +147,7 @@ export const handleUpdateCarInfoById = async (carData) => {
           msg: "Araç bilgileri güncellenirken bir sorun oluştu! Lütfen tekrar deneyin!",
           success: false,
         };
-        return success;
+        throw new Error("Car update failed");
       }
 
       await handleSaveParking(Number(slot), id);
@@ -183,5 +196,176 @@ export const handleUpdateCarInfoById = async (carData) => {
       success: false,
     };
     return success;
+  }
+};
+
+// -------- ARAÇ ÇIKIŞI
+export const handleDeleteCarById = async (carData) => {
+  const { id, park_id, plate, full_name, phone, tc_no } = carData;
+  let success = { msg: "İşlem başlatılamadı", success: false };
+
+  const sessionData = await AsyncStorage.getItem("@user_session");
+
+  let personal_id = null;
+  let activeUsername = "Sistem";
+
+  if (sessionData !== null) {
+    const parsedUser = JSON.parse(sessionData);
+    personal_id = parsedUser.id;
+    activeUsername = parsedUser.username;
+  }
+
+  try {
+    const ownerRes = await handleAddOwner({ full_name, phone, tc_no });
+
+    if (!ownerRes || !ownerRes.success || !ownerRes.ownerId) {
+      return {
+        msg:
+          ownerRes?.error ||
+          "Müşteri kaydı oluşturulamadığı için araç çıkışı iptal edildi!",
+        success: false,
+      };
+    }
+
+    const ownerId = ownerRes.ownerId;
+
+    await db.withTransactionAsync(async () => {
+      const carResult = await deleteCarById({
+        status: "out",
+        exit_date: new Date().toISOString(),
+        is_paid: 1,
+        park_id: null,
+        owner_id: Number(ownerId),
+        id: Number(id),
+      });
+
+      if (!carResult) {
+        success = { msg: "Araç çıkış kaydı güncellenemedi!", success: false };
+        throw new Error("Car update failed"); // Rollback
+      }
+
+      const clearSlot = await handleUpdateParkInfoById(Number(park_id));
+      if (!clearSlot) {
+        success = { msg: "Otopark slotu boşa çıkarılamadı!", success: false };
+        throw new Error("Slot clearing failed");
+      }
+
+      success = {
+        msg: "Araç otoparktan başarıyla çıkışı yapıldı!",
+        success: true,
+      };
+    });
+
+    const logData = {
+      userId: personal_id,
+      username: activeUsername,
+      actionType: "DELETE",
+      description:
+        activeUsername +
+        " kişisi " +
+        plate +
+        " aracını " +
+        full_name +
+        " kişisine teslim etti!",
+    };
+
+    await LogService.createLog(logData);
+
+    return success;
+  } catch (e) {
+    console.error("CarService katmanında handleDeleteCarById hatası:", e);
+    if (success.success !== true && success.msg === "İşlem başlatılamadı") {
+      success = {
+        msg: "Araç çıkışı yapılırken bir sorun oluştu! Lütfen tekrar deneyin!",
+        success: false,
+      };
+    }
+    return success;
+  }
+};
+
+export const handleGetReleasedCars = async () => {
+  try {
+    const releasedCars = await getReleasedCars();
+    return releasedCars;
+  } catch (e) {
+    console.error(
+      "Servis katmanında çıkan araçlar listelenirken hata oluştu: ",
+      e,
+    );
+    return [];
+  }
+};
+
+export const handleGetAddedCarCount = async () => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const count = await getAddedCarCount(today);
+    if (count && count.length > 0) {
+      return count[0].count;
+    }
+
+    return 0;
+  } catch (e) {
+    console.error("Bugünün araç sayısı çekilirken hata oluştu:", e);
+    return 0;
+  }
+};
+
+export const handleGetReleasedCarCount = async () => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const count = await getReleasedCarCount(today);
+    if (count && count.length > 0) {
+      return count[0].count;
+    }
+
+    return 0;
+  } catch (e) {
+    console.error("Bugünün araç sayısı çekilirken hata oluştu:", e);
+    return 0;
+  }
+};
+
+export const handleGetPrices = async () => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const prices = await getPrices(today);
+
+    let totalPrice = 0;
+
+    if (prices && prices.length > 0) {
+      prices.forEach((price) => {
+        const entry = new Date(price.entry_date);
+        const exit = new Date(price.exit_date);
+
+        // 2 tarih arasındaki ms farkı
+        const differenceInMs = exit.getTime() - entry.getTime();
+
+        //ms güne çevirir.
+        let daysSpent = differenceInMs / (1000 * 60 * 60 * 24);
+
+        // yuvarla.
+        daysSpent = Math.ceil(daysSpent);
+        if (daysSpent <= 0) daysSpent = 1; // taban 1
+
+        totalPrice += daysSpent * price.dailyPrice;
+      });
+    }
+
+    return totalPrice;
+  } catch (e) {
+    console.error("Bugünün araç sayısı çekilirken hata oluştu:", e);
+    return 0;
+  }
+};
+
+export const handleGetCarCount = async () => {
+  try {
+    const count = await getCarCount();
+    return count[0].count;
+  } catch (e) {
+    console.log("handlegetCarCount fonksiyonunda hata oluştu: " + e);
+    return 0;
   }
 };

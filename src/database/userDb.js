@@ -79,3 +79,42 @@ export const getUserById = async (id) => {
     return [];
   }
 };
+
+export const adminUpdateUser = async (userData) => {
+  const { id, name, surname, username, role, password } = userData;
+
+  try {
+    let sql = `
+      UPDATE users 
+      SET 
+        name = ?, 
+        surname = ?, 
+        username = ?, 
+        role = ?
+    `;
+
+    let params = [name.trim(), surname.trim(), username.trim(), role];
+
+    if (password) {
+      sql += `, password = ?`;
+      params.push(password);
+    }
+
+    sql += ` WHERE id = ?`;
+    params.push(Number(id));
+
+    const result = await db.runAsync(sql, params);
+
+    if (result && result.changes > 0) {
+      console.log(
+        `UserDb: ${username} isimli personelin bilgileri güncellendi!`,
+      );
+      return true;
+    }
+
+    return false;
+  } catch (e) {
+    console.error("SQL Katmanında adminUpdateUser hatası koptu:", e);
+    return false;
+  }
+};

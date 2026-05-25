@@ -14,4 +14,5 @@ export const Colors = {
   cardBg: "#1E1E1E",
   gray: "#AAAAAA",
   softRed: "#E74C3C",
+  danger: "#dca500",
 };

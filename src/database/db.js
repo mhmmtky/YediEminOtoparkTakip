@@ -64,7 +64,7 @@ export const setupDB = async () => {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             full_name TEXT,
             phone TEXT,
-            tc_no TEXT UNIQUE 
+            tc_no TEXT UNIQUE
         );
     `);
 

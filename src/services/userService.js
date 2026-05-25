@@ -1,4 +1,5 @@
 import {
+  adminUpdateUser,
   deleteUserById,
   getUserById,
   getUsers,
@@ -168,5 +169,53 @@ export const handleUpdateUser = async (userData) => {
   } catch (e) {
     console.error("Servis katmanında profil güncelleme hatası:", e);
     return { success: false, msg: "Sistem hatası! Daha sonra tekrar deneyin!" };
+  }
+};
+
+export const handleAdminUpdateUser = async (userData) => {
+  const { id, name, surname, username, role, password } = userData;
+
+  if (!name.trim() || !surname.trim() || !username.trim()) {
+    return { success: false, error: "Lütfen tüm alanları doldurun!" };
+  }
+
+  try {
+    // Yeni şifre girildiyse hashliyoruz, girilmediyse null bırakıyoruz
+    let hashedPassword = null;
+    if (password && password.trim() !== "") {
+      hashedPassword = await hashPassword(password);
+    }
+
+    const result = await adminUpdateUser({
+      id,
+      name,
+      surname,
+      username,
+      role,
+      password: hashedPassword,
+    });
+
+    if (result) {
+      return { success: true };
+    } else {
+      return {
+        success: false,
+        error: "Veritabanı güncellenirken bir sorun oluştu!",
+      };
+    }
+  } catch (e) {
+    console.error("userService içinde handleUpdateUser hatası:", e);
+    return { success: false, error: "Kullanıcı güncellenirken hata oluştu!" };
+  }
+};
+
+export const handleGetUserById = async (id) => {
+  try {
+    const result = await getUserById(id);
+    if (!result) return [];
+    return result;
+  } catch (e) {
+    console.log("handleGetUserById fonksiyonunda hata oluştu: " + e);
+    return [];
   }
 };

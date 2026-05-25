@@ -96,3 +96,18 @@ export const updateParkInfoById = async (parkId) => {
     return false;
   }
 };
+
+export const getParkCount = async () => {
+  try {
+    const rows = await db.getAllAsync(
+      "SELECT COUNT(*) as count FROM parking_slots",
+    );
+    return rows;
+  } catch (e) {
+    console.error(
+      `SQL Katmanında ${carId} park bilgileri çekilirken hata oluştu: `,
+      e,
+    );
+    return 0;
+  }
+};
