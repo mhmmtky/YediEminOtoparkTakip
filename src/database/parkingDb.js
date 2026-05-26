@@ -9,7 +9,7 @@ export async function getParkInfoByIdSql(parkId) {
     return result;
   } catch (e) {
     console.error(
-      `SQL Katmanında Slot (${parkId}) getirilirken hata oluştu: `,
+      `getParkInfoByIdSql Slot (${parkId}) getirilirken hata oluştu: `,
       e,
     );
     return null;
@@ -23,7 +23,10 @@ export const getBlocks = async () => {
     );
     return rows.map((row) => row.block);
   } catch (e) {
-    console.error("SQL Katmanında bloklar çekilirken hata oluştu: ", e);
+    console.error(
+      "getBlocks fonksiyonunda bloklar çekilirken hata oluştu: ",
+      e,
+    );
     return [];
   }
 };
@@ -37,7 +40,7 @@ export const getEmptySlotsByBlock = async (blockName) => {
     return rows;
   } catch (e) {
     console.error(
-      `SQL Katmanında ${blockName} bloğu slotları çekilirken hata oluştu: `,
+      `getEmptySlotsByBlock fonksiyonunda ${blockName} bloğu slotları çekilirken hata oluştu: `,
       e,
     );
     return [];
@@ -57,7 +60,7 @@ export const savePark = async (parkId, carId) => {
     return result;
   } catch (e) {
     console.error(
-      `SQL Katmanında Slot (${parkId}) güncellenirken hata oluştu: `,
+      `savePark fonksiyounda Slot (${parkId}) güncellenirken hata oluştu: `,
       e,
     );
     return false;
@@ -73,7 +76,7 @@ export const getParkInfoByCarId = async (carId) => {
     return rows;
   } catch (e) {
     console.error(
-      `SQL Katmanında ${carId} park bilgileri çekilirken hata oluştu: `,
+      ` getParkInfoByCarId fonksiyonunda ${carId} park bilgileri çekilirken hata oluştu: `,
       e,
     );
     return [];
@@ -90,7 +93,7 @@ export const updateParkInfoById = async (parkId) => {
     return result;
   } catch (e) {
     console.error(
-      `SQL Katmanında Slot (${parkId}) güncellenirken hata oluştu: `,
+      `updateParkInfoById fonksiypunda Slot (${parkId}) güncellenirken hata oluştu: `,
       e,
     );
     return false;
@@ -105,9 +108,61 @@ export const getParkCount = async () => {
     return rows;
   } catch (e) {
     console.error(
-      `SQL Katmanında ${carId} park bilgileri çekilirken hata oluştu: `,
+      `getParkCount fonksiyonunda park sayısı çekilirken hata oluştu: `,
       e,
     );
     return 0;
+  }
+};
+
+export const getLastSlotByBlockName = async (blockName) => {
+  try {
+    const count = await db.getFirstSync(
+      "SELECT MAX(number) as maxNumber FROM parking_slots WHERE block = ?;",
+      [blockName],
+    );
+    return count;
+  } catch (e) {
+    console.error(
+      `getLastSlotByBlockName park bilgileri çekilirken hata oluştu: `,
+      e,
+    );
+    return 0;
+  }
+};
+
+export const addParkingSlot = async (blockName, slotCode, number) => {
+  try {
+    db.runSync(
+      "INSERT INTO parking_slots (block, number, slot_code) VALUES (?, ?, ?);",
+      [blockName, number, slotCode],
+    );
+    return true;
+  } catch (e) {
+    console.error("addParkingSlot fonksiyonunda hata oluştu: ", e);
+    return false;
+  }
+};
+
+export const deleteParkingSlot = async (blockName, deletedCount) => {
+  try {
+    db.runSync(
+      `DELETE FROM parking_slots 
+       WHERE id IN (
+         SELECT id FROM parking_slots 
+         WHERE block = ? AND is_full = 0 
+         ORDER BY number DESC 
+         LIMIT ?
+       );`,
+      [blockName, deletedCount],
+    );
+
+    console.log(
+      `${blockName} bloğundan ${deletedCount} adet boş slot başarıyla silindi.`,
+    );
+    return true;
+  } catch (e) {
+    console.error("deleteParkingSlot fonksiyonunda hata koptu amk: ", e);
+    return false;
   }
 };

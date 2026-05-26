@@ -42,6 +42,7 @@ interface Car {
 }
 
 export default function detailCar() {
+  const [searchPlate, setSearchPlate] = useState<string>("");
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -170,7 +171,7 @@ export default function detailCar() {
       setTimeout(() => {
         setStatus(null);
       }, 3000);
-      console.error("Ön yüzde servis tetiklenirken hata oluştu:", e);
+      console.error("Front-End servis tetiklenirken hata oluştu:", e);
     }
   };
 
@@ -180,7 +181,7 @@ export default function detailCar() {
       const activeCars = await handleGetAllCar();
       setCars(activeCars);
     } catch (e) {
-      console.error("Ön yüzde araçlar listelenirken hata oluştu:", e);
+      console.error("Front-end araçlar listelenirken hata oluştu:", e);
     } finally {
       setLoading(false);
     }
@@ -190,6 +191,10 @@ export default function detailCar() {
     useCallback(() => {
       fetchActiveCars();
     }, []),
+  );
+
+  const filteredCars = cars.filter((car) =>
+    car.plate.toUpperCase().includes(searchPlate.toUpperCase().trim()),
   );
 
   const renderCarCard = ({ item }: { item: Car }) => {
@@ -255,7 +260,30 @@ export default function detailCar() {
 
   return (
     <View style={styles.container}>
-      {loading ? (
+      {/* ARAMA INPUT */}
+      <View style={styles.searchBarWrapper}>
+        <Ionicons
+          name="search-outline"
+          size={18}
+          color={Colors.gray}
+          style={{ marginRight: 10 }}
+        />
+        <TextInput
+          style={styles.searchInput}
+          value={searchPlate}
+          onChangeText={(text) => setSearchPlate(text.toUpperCase())}
+          placeholder="Plaka İle Ara (Örn: 34 KYA 508)"
+          placeholderTextColor="#666"
+          autoCapitalize="characters"
+        />
+        {searchPlate !== "" && (
+          <TouchableOpacity onPress={() => setSearchPlate("")}>
+            <Ionicons name="close-circle" size={18} color={Colors.gray} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {loading && cars.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.primary} />
           <Text style={{ color: Colors.white, marginTop: 10 }}>
@@ -264,14 +292,16 @@ export default function detailCar() {
         </View>
       ) : (
         <FlatList
-          data={cars}
+          data={filteredCars}
           keyExtractor={(item) => item.id}
           renderItem={renderCarCard}
           contentContainerStyle={styles.listContent}
           style={{ width: "100%" }}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>Otoparkta şu an araç yok!</Text>
+            <Text style={styles.emptyText}>
+              Aranan plakaya ait araç bulunamadı!
+            </Text>
           }
         />
       )}
@@ -339,7 +369,6 @@ export default function detailCar() {
                     setSelectedBlock(item.value);
                     setSelectedSlot(null);
                     try {
-                      // Blok her değiştiğinde slotları yeniler.
                       const slots = await handleGetEmptySlotsByBlock(
                         item.value,
                       );
@@ -417,12 +446,33 @@ export default function detailCar() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
     alignItems: "center",
     paddingTop: 50,
+  },
+  searchBarWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.cardBg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 8,
+    width: "90%",
+    height: 46,
+    paddingHorizontal: 12,
+    marginBottom: 5,
+    marginTop: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: Colors.white,
+    fontSize: 14,
+    fontFamily: Fonts.expFont,
+    height: "100%",
   },
   loadingContainer: {
     flex: 1,
@@ -533,7 +583,6 @@ const styles = StyleSheet.create({
     flex: 0.35,
     backgroundColor: Colors.softRed,
   },
-  // MODAL
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.75)",
@@ -630,7 +679,6 @@ const styles = StyleSheet.create({
     borderColor: "#444",
     borderRadius: 6,
   },
-
   selectedTextStyle: {
     fontSize: 14,
     color: "#fff",

@@ -93,14 +93,17 @@ export default function DashboardScreen() {
           <View
             style={[
               styles.progressBarFill,
-              { width: `${occupancyRate}%`, backgroundColor: progressColor },
+              {
+                width: `${occupancyRate}%`,
+                backgroundColor: progressColor,
+              },
             ]}
           />
         </View>
       </View>
       <View style={styles.incomeCard}>
         <View style={styles.incomeInfo}>
-          <Text style={styles.incomeLabel}>Bugün Toplam Tahsilat</Text>
+          <Text style={styles.incomeLabel}>Bugünkü Toplam Kazanç</Text>
           <Text style={styles.incomeValue}>
             {dailyIncome.toLocaleString("tr-TR")} TL
           </Text>

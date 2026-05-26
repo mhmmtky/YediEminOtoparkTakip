@@ -11,3 +11,33 @@ export const getCategories = async () => {
     return [];
   }
 };
+
+export const updateCategoryPrice = async (id, newPrice) => {
+  try {
+    db.runSync("UPDATE categories SET daily_price = ? WHERE id = ?;", [
+      newPrice,
+      id,
+    ]);
+
+    console.log(
+      `ID'si ${id} olan kategorinin yeni fiyatı ${newPrice} TL olarak SQL'e çakıldı kral!`,
+    );
+    return true;
+  } catch (e) {
+    console.error(`updateCategoryPrice veritabanı hatası oluştu: `, e);
+    return false;
+  }
+};
+
+export const saveCategory = async (name, price) => {
+  try {
+    db.runSync("INSERT INTO categories (name, daily_price) VALUES (?, ?);", [
+      name,
+      price,
+    ]);
+    return true;
+  } catch (e) {
+    console.error("saveCategory fonksiyonundad hata luştu: ", e);
+    return false;
+  }
+};

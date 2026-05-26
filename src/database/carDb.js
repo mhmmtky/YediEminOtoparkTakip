@@ -173,3 +173,37 @@ export const getCarCount = async () => {
     );
   }
 };
+
+export const getCarsWithFilters = async (plate, startDate, endDate) => {
+  try {
+    let query = `
+      SELECT c.*, cate.name as category_name, cate.daily_price as category_price, park.slot_code as car_slot
+      FROM cars c
+      LEFT JOIN categories cate ON c.category_id = cate.id
+      LEFT JOIN parking_slots park ON  c.park_id = park.id
+      WHERE status = 'inside'
+    `;
+    let params = [];
+
+    // Kullanıcı plakayı doldurduysa
+    if (plate && plate.trim() !== "") {
+      query += " AND c.plate LIKE ?";
+      params.push(`%${plate.trim()}%`);
+    }
+
+    // Tarihler doluysa
+    if (startDate && endDate) {
+      query += " AND date(c.entry_date) BETWEEN date(?) AND date(?)";
+      params.push(startDate, endDate);
+    }
+
+    query += " ORDER BY c.entry_date DESC;";
+
+    // sorguyu çalıştır.
+    const rows = await db.getAllAsync(query, params);
+    return rows;
+  } catch (e) {
+    console.error("searchCarsWithFilters SQL katmanında hata oluştu: ", e);
+    return [];
+  }
+};

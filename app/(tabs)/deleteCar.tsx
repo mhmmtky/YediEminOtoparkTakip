@@ -40,6 +40,7 @@ interface Car {
 }
 
 export default function deleteCar() {
+  const [searchPlate, setSearchPlate] = useState<string>("");
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -47,7 +48,6 @@ export default function deleteCar() {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
 
-  // 🎯 OWNERS TABLOSUNA UYUMLU INPUT STATE'LERİ AMK
   const [ownerFullName, setOwnerFullName] = useState<string>("");
   const [ownerPhone, setOwnerPhone] = useState<string>("");
   const [ownerTcNo, setOwnerTcNo] = useState<string>("");
@@ -69,16 +69,19 @@ export default function deleteCar() {
     }
   };
 
-  // Sayfa her odaklandığında otoparkı canlı tara kanka amk
   useFocusEffect(
     useCallback(() => {
       fetchActiveCars();
     }, []),
   );
 
+  //filtrele
+  const filteredCars = cars.filter((car) =>
+    car.plate.toUpperCase().includes(searchPlate.toUpperCase().trim()),
+  );
+
   const openDeleteModal = (car: Car) => {
     setSelectedCar(car);
-    // Modal her açıldığında içeriyi sıfırla amk pürüz çıkmasın
     setOwnerFullName("");
     setOwnerPhone("");
     setOwnerTcNo("");
@@ -88,28 +91,26 @@ export default function deleteCar() {
   const handleReleaseCarAction = async () => {
     if (!selectedCar) return;
 
-    // Ön yüz validasyonları
     if (!ownerFullName.trim() || !ownerPhone.trim() || !ownerTcNo.trim()) {
       setStatus({
-        message: "Lütfen teslim alan şahsın bilgilerini eksiksiz girin!",
+        message: "Lütfen teslim alan kişinin bilgilerini eksiksiz girin!",
         type: "error",
       });
       return;
     }
     if (ownerTcNo.trim().length !== 11) {
       setStatus({
-        message: "TC Kimlik Numarası 11 hane olmak zorundadır kral!",
+        message: "TC Kimlik Numarası 11 hane olmak zorundadır!",
         type: "error",
       });
       return;
     }
 
     try {
-      // 🎯 REÇETE: Bütün verileri tek pakette servise gönderiyoruz amk!
       const res = await handleDeleteCarById({
         id: Number(selectedCar.id),
         park_id: Number(selectedCar.park_id),
-        plate: selectedCar.plate, // 🎯 Loglama için plakayı da ekledik, az önce çözdüğümüz mevzu!
+        plate: selectedCar.plate,
         full_name: ownerFullName,
         phone: ownerPhone,
         tc_no: ownerTcNo,
@@ -117,10 +118,7 @@ export default function deleteCar() {
 
       if (res && res.success) {
         setModalVisible(false);
-        // Canlı listeyi anlık yenilemek için detailCar'daki o meşhur fonksiyonu tetikle amk
-        if (typeof fetchActiveCars === "function") {
-          fetchActiveCars();
-        }
+        fetchActiveCars();
 
         setStatus({
           message: `${selectedCar.plate.toUpperCase()} plakalı araç başarıyla teslim edildi ve çıkışı yapıldı!`,
@@ -133,7 +131,7 @@ export default function deleteCar() {
         });
       }
     } catch (e) {
-      console.error("Ön yüzde çıkış esnasında hata koptu:", e);
+      console.error("front-endde çıkış esnasında hata koptu:", e);
       setStatus({
         message: "Sistemsel bir çıkış hatası oluştu!",
         type: "error",
@@ -198,7 +196,30 @@ export default function deleteCar() {
 
   return (
     <View style={styles.container}>
-      {loading ? (
+      {/* ARAMA INPUTU */}
+      <View style={styles.searchBarWrapper}>
+        <Ionicons
+          name="search-outline"
+          size={18}
+          color={Colors.gray}
+          style={{ marginRight: 10 }}
+        />
+        <TextInput
+          style={styles.searchInput}
+          value={searchPlate}
+          onChangeText={(text) => setSearchPlate(text.toUpperCase())}
+          placeholder="Çıkış İçin Plaka Ara (Örn: 41 FB 508)"
+          placeholderTextColor="#666"
+          autoCapitalize="characters"
+        />
+        {searchPlate !== "" && (
+          <TouchableOpacity onPress={() => setSearchPlate("")}>
+            <Ionicons name="close-circle" size={18} color={Colors.gray} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {loading && cars.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.softRed} />
           <Text style={{ color: Colors.white, marginTop: 10 }}>
@@ -207,14 +228,16 @@ export default function deleteCar() {
         </View>
       ) : (
         <FlatList
-          data={cars}
+          data={filteredCars}
           keyExtractor={(item) => item.id}
           renderItem={renderCarCard}
           contentContainerStyle={styles.listContent}
           style={{ width: "100%" }}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>Otoparkta şu an araç yok!</Text>
+            <Text style={styles.emptyText}>
+              Aranan kritere uygun araç bulunamadı!
+            </Text>
           }
         />
       )}
@@ -238,25 +261,23 @@ export default function deleteCar() {
             <ScrollView
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled">
-              {/* Araç Özet Kartı */}
               <View style={styles.infoSummaryBox}>
                 <Text style={styles.summaryText}>
-                  📋 Plaka:{" "}
+                  Plaka:{" "}
                   <Text style={{ fontWeight: "bold", color: "#F1C40F" }}>
                     {selectedCar?.plate.toUpperCase()}
                   </Text>
                 </Text>
                 <Text style={styles.summaryText}>
-                  📍 Konum: {selectedCar?.car_slot}
+                  Konum: {selectedCar?.car_slot}
                 </Text>
                 <Text style={styles.summaryText}>
-                  🚗 Araç: {selectedCar?.brand} {selectedCar?.model}
+                  Araç: {selectedCar?.brand} {selectedCar?.model}
                 </Text>
               </View>
 
               <Text style={styles.sectionTitle}>Müşteri / Sahip Bilgileri</Text>
 
-              {/* full_name input */}
               <Text style={styles.inputLabel}>Adı Soyadı</Text>
               <View style={styles.inputWrapper}>
                 <Ionicons
@@ -274,7 +295,6 @@ export default function deleteCar() {
                 />
               </View>
 
-              {/* phone input */}
               <Text style={styles.inputLabel}>Telefon Numarası</Text>
               <View style={styles.inputWrapper}>
                 <Ionicons
@@ -293,7 +313,6 @@ export default function deleteCar() {
                 />
               </View>
 
-              {/* tc_no input */}
               <Text style={styles.inputLabel}>T.C. Kimlik Numarası</Text>
               <View style={styles.inputWrapper}>
                 <Ionicons
@@ -313,7 +332,6 @@ export default function deleteCar() {
                 />
               </View>
 
-              {/* Butonlar */}
               <View style={styles.modalButtonRow}>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.cancelModalButton]}
@@ -345,6 +363,26 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     alignItems: "center",
     paddingTop: 50,
+  },
+  searchBarWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.cardBg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 8,
+    width: "90%",
+    height: 46,
+    paddingHorizontal: 12,
+    marginBottom: 5,
+    marginTop: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: Colors.white,
+    fontSize: 14,
+    fontFamily: Fonts.expFont,
+    height: "100%",
   },
   loadingContainer: {
     flex: 1,
@@ -451,7 +489,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.softRed,
     height: "100%",
   },
-  // MODAL
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.85)",
@@ -463,7 +500,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1E1E1E",
     borderRadius: 12,
     width: "100%",
-    maxHeight: "85%", // Ekrandan taşmasın amk klavye açılınca
+    maxHeight: "85%",
     padding: 20,
     borderWidth: 1,
     borderColor: "#444",

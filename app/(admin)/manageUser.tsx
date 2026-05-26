@@ -126,12 +126,12 @@ export default function ManageUserScreen() {
 
   const handleDeletePress = (id: number, username: string) => {
     Alert.alert(
-      "Personeli Pasife Al",
+      "Personel Kaydını Sil",
       `${username} kullanıcısını sistemden silmek istediğinize emin misiniz?`,
       [
         { text: "VAZGEÇ", style: "cancel" },
         {
-          text: "PASİFE AL",
+          text: "SİL",
           style: "destructive",
           onPress: async () => {
             try {

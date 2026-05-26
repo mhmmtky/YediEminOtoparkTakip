@@ -1,6 +1,9 @@
 import {
+  addParkingSlot,
+  deleteParkingSlot,
   getBlocks,
   getEmptySlotsByBlock,
+  getLastSlotByBlockName,
   getParkCount,
   getParkInfoByCarId,
   getParkInfoByIdSql,
@@ -98,5 +101,54 @@ export const handleGetParkCount = async () => {
         e,
     );
     return 0;
+  }
+};
+
+export const handleGetLastSlotByBlockName = async (blockName) => {
+  try {
+    const result = await getLastSlotByBlockName(blockName);
+    return result;
+  } catch (e) {
+    console.error(
+      "handleGetLastSlotByBlockName fonksiyonunda hata oluştu: " + e,
+    );
+    return { maxNumber: 0 };
+  }
+};
+
+export const handleUpdateBlockCapacity = async (blockName, newCapacity) => {
+  try {
+    const maxResult = await getLastSlotByBlockName(blockName);
+    const currentMaxNumber = maxResult.maxNumber ? maxResult.maxNumber : 0;
+
+    const diff = newCapacity - currentMaxNumber;
+
+    if (diff > 0) {
+      for (let i = 1; i <= diff; i++) {
+        const nextNumber = currentMaxNumber + i;
+        const slotCode = `${blockName}-${nextNumber}`;
+
+        await addParkingSlot(blockName, slotCode, nextNumber);
+      }
+      console.log(`${blockName} bloğuna ${diff} tane yeni slot eklendi kral!`);
+      return { success: true, message: `${diff} adet slot başarıyla eklendi.` };
+    } else if (diff < 0) {
+      const deletedCount = Math.abs(diff);
+
+      await deleteParkingSlot(blockName, deletedCount);
+
+      console.log(
+        `${blockName} bloğundan ${deletedCount} adet boş slot silindi.`,
+      );
+      return { success: true, message: `${deletedCount} adet slot silindi.` };
+    }
+
+    return {
+      success: true,
+      message: "Kapasite zaten aynı, işlem yapılmadı.",
+    };
+  } catch (e) {
+    console.error("Blok kapasitesi güncellenirken hata oluştu:", e);
+    return { success: false, error: e.message };
   }
 };

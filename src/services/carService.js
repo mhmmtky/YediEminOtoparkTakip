@@ -3,6 +3,7 @@ import {
   getAddedCarCount,
   getAllCar,
   getCarCount,
+  getCarsWithFilters,
   getPrices,
   getReleasedCarCount,
   getReleasedCars,
@@ -110,7 +111,7 @@ export const handleAddCar = async (fCarData) => {
 export const handleGetAllCar = async () => {
   try {
     const cars = await getAllCar();
-    console.log("ön yüze gidiyor");
+    console.log("front-ende gidiyor");
     return cars;
   } catch (e) {
     console.error(
@@ -367,5 +368,34 @@ export const handleGetCarCount = async () => {
   } catch (e) {
     console.log("handlegetCarCount fonksiyonunda hata oluştu: " + e);
     return 0;
+  }
+};
+
+export const handleGetCarsWithFilters = async (
+  plate,
+  startDateObj,
+  endDateObj,
+) => {
+  try {
+    let formattedStart = null;
+    let formattedEnd = null;
+
+    if (startDateObj instanceof Date) {
+      formattedStart = startDateObj.toISOString().split("T")[0];
+    }
+
+    if (endDateObj instanceof Date) {
+      formattedEnd = endDateObj.toISOString().split("T")[0];
+    }
+
+    const cars = await getCarsWithFilters(plate, formattedStart, formattedEnd);
+
+    return { success: true, data: cars || [] };
+  } catch (e) {
+    console.error("carService katmanında filtreleme hatası oluştu:", e);
+    return {
+      success: false,
+      error: "Kayıtlar sorgulanırken sistemsel bir hata oluştu.",
+    };
   }
 };
