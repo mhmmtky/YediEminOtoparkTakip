@@ -35,6 +35,7 @@ export const setupDB = async () => {
             is_paid INTEGER DEFAULT 0,
             category_id INTEGER,
             personal_id INTEGER,
+            exit_personal_id INTEGER,
             owner_id INTEGER,        
             status TEXT DEFAULT 'inside', 
             park_id INTEGER UNIQUE,          

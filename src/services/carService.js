@@ -216,6 +216,13 @@ export const handleDeleteCarById = async (carData) => {
     activeUsername = parsedUser.username;
   }
 
+  console.log("KAYDEDİLEN: " + personal_id + " " + activeUsername);
+  const sql = `SELECT id, username FROM users WHERE 1=1`;
+  const rows = await db.getAllAsync(sql);
+  rows.forEach((element) => {
+    console.log("SQL: " + element.id + " " + element.username);
+  });
+
   try {
     const ownerRes = await handleAddOwner({ full_name, phone, tc_no });
 
@@ -238,6 +245,7 @@ export const handleDeleteCarById = async (carData) => {
         park_id: null,
         owner_id: Number(ownerId),
         id: Number(id),
+        personal_id,
       });
 
       if (!carResult) {
@@ -301,7 +309,10 @@ export const handleGetReleasedCars = async () => {
 export const handleGetAddedCarCount = async () => {
   try {
     const today = new Date().toISOString().split("T")[0];
-    const count = await getAddedCarCount(today);
+    const sessionData = await AsyncStorage.getItem("@user_session");
+
+    const parsedUser = JSON.parse(sessionData);
+    const count = await getAddedCarCount(today, parsedUser.id);
     if (count && count.length > 0) {
       return count[0].count;
     }
@@ -316,7 +327,10 @@ export const handleGetAddedCarCount = async () => {
 export const handleGetReleasedCarCount = async () => {
   try {
     const today = new Date().toISOString().split("T")[0];
-    const count = await getReleasedCarCount(today);
+    const sessionData = await AsyncStorage.getItem("@user_session");
+
+    const parsedUser = JSON.parse(sessionData);
+    const count = await getReleasedCarCount(today, parsedUser.id);
     if (count && count.length > 0) {
       return count[0].count;
     }

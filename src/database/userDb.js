@@ -72,7 +72,9 @@ export const updateUserById = async (id, name, surname, username, password) => {
 
 export const getUserById = async (id) => {
   try {
-    const result = await db.runAsync(`SELECT * FROM users WHERE id=?;`, [id]);
+    const result = await db.getFirstAsync(`SELECT * FROM users WHERE id=?;`, [
+      id,
+    ]);
     return result;
   } catch (e) {
     console.error("SQL Katmanında SELECT Hatası:", e);

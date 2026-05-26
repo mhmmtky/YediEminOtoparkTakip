@@ -1,6 +1,6 @@
 import { Colors } from "@/constants/Colors";
 import { Fonts } from "@/constants/Fonts";
-import { handleGetCarsWithFilters } from "@/src/services/carService"; // 🚀 Doğrudan filtreli SQLite servisi!
+import { handleGetCarsWithFilters } from "@/src/services/carService";
 import {
   handleGetBlocks,
   handleGetLastSlotByBlockName,

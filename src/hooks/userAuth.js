@@ -1,3 +1,4 @@
+import { db } from "@/src/database/db";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -18,8 +19,21 @@ export const useAuth = () => {
     }
 
     try {
+      const allUsers = await db.getAllAsync("SELECT username FROM users;");
+      console.log("Veritabanındaki tüm kullanıcılar:", allUsers);
+
       const hashedPassword = await hashPassword(password);
       const user = await loginUser(username, hashedPassword);
+
+      const sql = "SELECT password FROM users WHERE username = ?";
+      const res = await db.getFirstAsync(sql, [username]);
+      console.log("hashlenen " + hashedPassword + " db: " + res?.password);
+
+      const checkPass = await db.getFirstAsync(
+        "SELECT username, password FROM users WHERE username = ?",
+        ["mhmmt"],
+      );
+      console.log("Kullanıcı ve şifre kolonu:", checkPass);
 
       if (user) {
         const sessionData = JSON.stringify({

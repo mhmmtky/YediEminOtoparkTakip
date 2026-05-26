@@ -72,17 +72,20 @@ export const updateCarInfoById = async (carData) => {
 
 export const deleteCarById = async (carData) => {
   try {
-    const { status, exit_date, owner_id, is_paid, park_id, id } = carData;
-    const sql = `UPDATE cars SET status = ?, exit_date = ?, owner_id = ?, is_paid = ?, park_id = ? WHERE id = ?`;
+    const { status, exit_date, owner_id, is_paid, park_id, id, personal_id } =
+      carData;
+    const sql = `UPDATE cars SET status = ?, exit_date = ?, owner_id = ?, is_paid = ?, park_id = ?, exit_personal_id = ? WHERE id = ?`;
     const result = await db.runAsync(sql, [
       status,
       exit_date,
       owner_id,
       is_paid,
       park_id,
+      personal_id,
       id,
     ]);
 
+    console.log(exit_date + " " + personal_id);
     return result;
   } catch (e) {
     console.error("SQL Katmanında deleteCarById hatası:", e);
@@ -111,8 +114,7 @@ export const getReleasedCars = async () => {
         o.tc_no AS owner_tc
       FROM cars c
       LEFT JOIN categories cate ON c.category_id = cate.id
-      LEFT JOIN users u ON c.personal_id = u.id
-
+      LEFT JOIN users u ON c.exit_personal_id = u.id
       LEFT JOIN owners o ON c.owner_id = o.id 
       WHERE c.status = ?
       ORDER BY c.exit_date DESC
@@ -126,10 +128,10 @@ export const getReleasedCars = async () => {
   }
 };
 
-export const getAddedCarCount = async (today) => {
+export const getAddedCarCount = async (today, id) => {
   try {
-    const sql = `SELECT COUNT(*) as count FROM cars WHERE date(entry_date) = ? `;
-    const rows = await db.getAllAsync(sql, [today, "inside"]);
+    const sql = `SELECT COUNT(*) as count FROM cars WHERE date(entry_date) = ? AND personal_id = ? `;
+    const rows = await db.getAllAsync(sql, [today, id]);
     console.log(rows);
     return rows;
   } catch (e) {
@@ -138,10 +140,10 @@ export const getAddedCarCount = async (today) => {
   }
 };
 
-export const getReleasedCarCount = async (today) => {
+export const getReleasedCarCount = async (today, id) => {
   try {
-    const sql = `SELECT COUNT(*) as count FROM cars WHERE date(exit_date) = ?`;
-    const rows = await db.getAllAsync(sql, [today]);
+    const sql = `SELECT COUNT(*) as count FROM cars WHERE date(exit_date) = ? AND exit_personal_id = ?`;
+    const rows = await db.getAllAsync(sql, [today, id]);
     console.log(rows);
     return rows;
   } catch (e) {
