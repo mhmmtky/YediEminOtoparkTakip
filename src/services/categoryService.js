@@ -1,5 +1,6 @@
 import {
   getCategories,
+  getTopCategory,
   saveCategory,
   updateCategoryPrice,
 } from "@/src/database/categoryDb";
@@ -74,5 +75,17 @@ export const handleAddCategory = async (name, price) => {
     };
   } catch (e) {
     return { success: false, error: e.message };
+  }
+};
+
+export const handleGetTopCategory = async () => {
+  try {
+    const result = await getTopCategory();
+    return result && result.length > 0
+      ? result[0]
+      : { name: "Veri Yok", count: 0 };
+  } catch (e) {
+    console.error("Top category hatası:", e);
+    return { name: "Hata", count: 0 };
   }
 };

@@ -17,6 +17,7 @@ export const GlobalStyles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     fontSize: 16,
+    color: Colors.white, // 🎯 İŞTE EKSİK OLAN PARÇA BU!
   },
   buttons: {
     backgroundColor: Colors.primary,

@@ -152,10 +152,10 @@ export const getReleasedCarCount = async (today, id) => {
   }
 };
 
-export const getPrices = async (today) => {
+export const getPrices = async (today, userId) => {
   try {
-    const sql = `SELECT c.entry_date, c.exit_date, c.category_id, cate.daily_price AS dailyPrice FROM cars c LEFT JOIN categories cate ON cate.id = c.category_id WHERE date(c.exit_date) = ?`;
-    const rows = await db.getAllAsync(sql, [today]);
+    const sql = `SELECT c.entry_date, c.exit_date, c.category_id, cate.daily_price AS dailyPrice FROM cars c LEFT JOIN categories cate ON cate.id = c.category_id WHERE date(c.exit_date) = ? AND c.exit_personal_id = ?`;
+    const rows = await db.getAllAsync(sql, [today, userId]);
     console.log(rows);
     return rows;
   } catch (e) {
@@ -207,5 +207,17 @@ export const getCarsWithFilters = async (plate, startDate, endDate) => {
   } catch (e) {
     console.error("searchCarsWithFilters SQL katmanında hata oluştu: ", e);
     return [];
+  }
+};
+
+export const getAllCarCount = async () => {
+  try {
+    const sql = `SELECT COUNT(*) as count FROM cars WHERE 1=1`;
+    const rows = await db.getFirstAsync(sql);
+    return rows.count;
+  } catch (e) {
+    console.error(
+      "getCarCount fonksiyonunda araç sayısı hesaplanırken hata oluştu: " + e,
+    );
   }
 };

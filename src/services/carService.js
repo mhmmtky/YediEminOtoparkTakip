@@ -2,6 +2,7 @@ import {
   deleteCarById,
   getAddedCarCount,
   getAllCar,
+  getAllCarCount,
   getCarCount,
   getCarsWithFilters,
   getPrices,
@@ -345,7 +346,15 @@ export const handleGetReleasedCarCount = async () => {
 export const handleGetPrices = async () => {
   try {
     const today = new Date().toISOString().split("T")[0];
-    const prices = await getPrices(today);
+    const sessionData = await AsyncStorage.getItem("@user_session");
+
+    let personal_id = null;
+
+    if (sessionData !== null) {
+      const parsedUser = JSON.parse(sessionData);
+      personal_id = parsedUser.id;
+    }
+    const prices = await getPrices(today, personal_id);
 
     let totalPrice = 0;
 
@@ -411,5 +420,16 @@ export const handleGetCarsWithFilters = async (
       success: false,
       error: "Kayıtlar sorgulanırken sistemsel bir hata oluştu.",
     };
+  }
+};
+
+export const handleGetAllCarCount = async () => {
+  try {
+    const count = await getAllCarCount();
+    return count;
+  } catch (e) {
+    console.error(
+      "getCarCount fonksiyonunda araç sayısı hesaplanırken hata oluştu: " + e,
+    );
   }
 };

@@ -41,3 +41,22 @@ export const saveCategory = async (name, price) => {
     return false;
   }
 };
+
+export const getTopCategory = async () => {
+  try {
+    const sql = `
+      SELECT c.category_id, cate.name, COUNT(*) as count 
+      FROM cars c 
+      JOIN categories cate ON c.category_id = cate.id 
+      GROUP BY c.category_id 
+      ORDER BY count DESC 
+      LIMIT 1;
+    `;
+    const count = await db.getAllAsync(sql);
+
+    return count;
+  } catch (e) {
+    console.error("getTopCategories fonksiyonunda hata: " + e);
+    return { name: "Veri Yok", count: 0 };
+  }
+};
