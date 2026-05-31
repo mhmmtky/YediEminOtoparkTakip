@@ -208,7 +208,7 @@ export default function AddCarScreen() {
               ]}
               value={plate}
               onChangeText={setPlate}
-              placeholder="41 L 4172"
+              placeholder="34 T 1508"
               placeholderTextColor={Colors.placeholder}
               autoCapitalize="characters"
             />
@@ -380,7 +380,7 @@ export default function AddCarScreen() {
 
         {/* Aracı Kabul Et Butonu */}
         <TouchableOpacity style={styles.submitButton} onPress={onAddCarPress}>
-          <Text style={styles.submitButtonText}>ARAÇ KAYDINI TAMMALA</Text>
+          <Text style={styles.submitButtonText}>ARAÇ KAYDINI TAMAMLA</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>

@@ -5,7 +5,7 @@ export const getCategories = async () => {
     const rows = await db.getAllAsync(
       "SELECT id, name, daily_price FROM categories;",
     );
-    return rows; // [{id: 1, name: 'Otomobil', daily_price: 150}, ...] şeklinde döner
+    return rows;
   } catch (e) {
     console.error("Kategoriler DB'den çekilirken hata oluştu:", e);
     return [];
@@ -19,9 +19,6 @@ export const updateCategoryPrice = async (id, newPrice) => {
       id,
     ]);
 
-    console.log(
-      `ID'si ${id} olan kategorinin yeni fiyatı ${newPrice} TL olarak SQL'e çakıldı kral!`,
-    );
     return true;
   } catch (e) {
     console.error(`updateCategoryPrice veritabanı hatası oluştu: `, e);
@@ -58,5 +55,19 @@ export const getTopCategory = async () => {
   } catch (e) {
     console.error("getTopCategories fonksiyonunda hata: " + e);
     return { name: "Veri Yok", count: 0 };
+  }
+};
+
+export const getCategoriesById = async (id) => {
+  try {
+    const sql = `
+      SELECT name FROM categories WHERE id = ?
+    `;
+    const result = await db.getFirstAsync(sql, [id]);
+
+    return result;
+  } catch (e) {
+    console.error("getCategoryById fonksiyonunda hata: " + e);
+    return {};
   }
 };

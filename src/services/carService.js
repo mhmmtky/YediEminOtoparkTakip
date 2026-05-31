@@ -138,6 +138,7 @@ export const handleUpdateCarInfoById = async (carData) => {
     activeUsername = parsedUser.username;
   }
   try {
+    let newParkInfo = null;
     await db.withTransactionAsync(async () => {
       if (!brand || !model || !blockName || !slot) {
         success = { msg: "Lütfen boş alanlar doldurunuz!", success: false };
@@ -162,9 +163,16 @@ export const handleUpdateCarInfoById = async (carData) => {
             success = { msg: "Eski park yeri boşaltılamadı!", success: false };
             throw new Error("Eski park yeri silinirken hata oluştu.");
           }
+          newParkInfo = await handleGetParkInfoByCarId(id);
         }
       }
     });
+
+    const slotCode =
+      newParkInfo && newParkInfo.length > 0
+        ? newParkInfo[0].slot_code
+        : "Bilinmiyor";
+
     const logData = {
       userId: personal_id,
       username: activeUsername,
@@ -175,9 +183,7 @@ export const handleUpdateCarInfoById = async (carData) => {
         plate +
         " aracının bilgilerini güncelledi. " +
         "Otopark Konumu: " +
-        blockName +
-        "-" +
-        parkInfo[0].number +
+        slotCode +
         " Marka Model: " +
         brand +
         " " +

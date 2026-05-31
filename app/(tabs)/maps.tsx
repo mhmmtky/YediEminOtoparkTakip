@@ -156,7 +156,9 @@ export default function ParkingMapScreen() {
           </Text>
         </View>
       ) : (
-        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={{ flex: 1, paddingBottom: 50 }}
+          showsVerticalScrollIndicator={false}>
           {slotCount === 0 ? (
             <Text style={styles.emptyBlockText}>
               Bu bloğa ait tanımlanmış bir slot yok!
@@ -210,6 +212,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
     paddingHorizontal: 20,
+    paddingBottom: 100,
   },
   headerContainer: { paddingTop: 60, paddingBottom: 15 },
   headerTitle: {
@@ -217,12 +220,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: Colors.white,
     fontFamily: Fonts.mainFont,
+    marginTop: -25,
   },
   headerSubTitle: {
     fontSize: 13,
     color: Colors.gray,
     fontFamily: Fonts.expFont,
-    marginTop: 2,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -257,7 +260,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: Colors.border,
-    marginTop: 5,
     elevation: 4,
   },
   mapCardTitle: {

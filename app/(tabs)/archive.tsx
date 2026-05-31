@@ -63,7 +63,7 @@ export default function ReleasedCarsScreen() {
   const renderReleasedCard = ({ item }: { item: ReleasedCar }) => {
     return (
       <View style={styles.card}>
-        {/* Üst Satır: Plaka */}
+        {/* Plaka  */}
         <View style={styles.plateContainer}>
           <Text style={styles.plateText}>{item.plate.toUpperCase()}</Text>
         </View>

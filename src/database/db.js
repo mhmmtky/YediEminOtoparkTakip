@@ -29,7 +29,7 @@ export const setupDB = async () => {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             brand TEXT,            
             model TEXT,            
-            plate TEXT UNIQUE,     
+            plate TEXT,     
             mileage INTEGER,       
             year INTEGER,          
             is_paid INTEGER DEFAULT 0,

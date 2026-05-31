@@ -159,7 +159,7 @@ export default function VehicleSearchScreen() {
             style={styles.input}
             value={searchPlate}
             onChangeText={(text) => setSearchPlate(text.toUpperCase())}
-            placeholder="Örn: 34 KYA 508"
+            placeholder="Plaka ile Ara : 34 T 1508"
             placeholderTextColor={Colors.placeholder}
             autoCapitalize="characters"
           />
@@ -243,7 +243,8 @@ export default function VehicleSearchScreen() {
               const daysDiff = getDaysDiff(item.entry_date);
 
               const dailyPrice = item.category_price;
-              const calculatedDebt = daysDiff * dailyPrice;
+              let calculatedDebt = daysDiff * dailyPrice;
+              if (daysDiff < 1) calculatedDebt = dailyPrice;
 
               return (
                 <View style={styles.resultCard}>

@@ -10,6 +10,8 @@ import {
   savePark,
   updateParkInfoById,
 } from "@/src/database/parkingDb";
+import LogService from "@/src/services/logs";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const handleGetBlocks = async () => {
   return await getBlocks();
@@ -21,9 +23,11 @@ export const handleGetEmptySlotsByBlock = async (blockName) => {
 };
 
 export const handleSaveParking = async (parkId, carId) => {
-  if (!parkId || parkId < 1 || parkId > 780) {
+  if (!parkId || parkId < 1) {
     return { success: false, error: "Geçersiz Slot ID'si!" };
   }
+
+  console.log(carId);
 
   if (!carId) {
     return { success: false, error: "Geçersiz Araç ID'si!" };
@@ -123,6 +127,17 @@ export const handleUpdateBlockCapacity = async (blockName, newCapacity) => {
 
     const diff = newCapacity - currentMaxNumber;
 
+    const sessionData = await AsyncStorage.getItem("@user_session");
+    let personal_username = "Bilinmeyen";
+    let personal_id = null;
+    console.log("session alındı");
+
+    if (sessionData) {
+      const parsedUser = JSON.parse(sessionData);
+      personal_username = parsedUser.username;
+      personal_id = parsedUser.id;
+    }
+
     if (diff > 0) {
       for (let i = 1; i <= diff; i++) {
         const nextNumber = currentMaxNumber + i;
@@ -130,7 +145,22 @@ export const handleUpdateBlockCapacity = async (blockName, newCapacity) => {
 
         await addParkingSlot(blockName, slotCode, nextNumber);
       }
-      console.log(`${blockName} bloğuna ${diff} tane yeni slot eklendi kral!`);
+      console.log(`${blockName} bloğuna ${diff} tane yeni slot eklendi!`);
+
+      const logData = {
+        userId: personal_id,
+        username: personal_username,
+        actionType: "UPDATE",
+        description:
+          personal_username +
+          " kişisi " +
+          blockName +
+          " bloğundaki slot sayısını " +
+          newCapacity +
+          " olarak güncelledi!",
+      };
+
+      await LogService.createLog(logData);
       return { success: true, message: `${diff} adet slot başarıyla eklendi.` };
     } else if (diff < 0) {
       const deletedCount = Math.abs(diff);
@@ -140,6 +170,21 @@ export const handleUpdateBlockCapacity = async (blockName, newCapacity) => {
       console.log(
         `${blockName} bloğundan ${deletedCount} adet boş slot silindi.`,
       );
+
+      const logData = {
+        userId: personal_id,
+        username: personal_username,
+        actionType: "UPDATE",
+        description:
+          personal_username +
+          " kişisi " +
+          blockName +
+          " bloğundaki slot sayısını " +
+          newCapacity +
+          " olarak güncelledi!",
+      };
+
+      await LogService.createLog(logData);
       return { success: true, message: `${deletedCount} adet slot silindi.` };
     }
 

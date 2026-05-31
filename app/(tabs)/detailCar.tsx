@@ -272,7 +272,7 @@ export default function detailCar() {
           style={styles.searchInput}
           value={searchPlate}
           onChangeText={(text) => setSearchPlate(text.toUpperCase())}
-          placeholder="Plaka İle Ara (Örn: 34 KYA 508)"
+          placeholder="Plaka ile Ara : 34 T 1508"
           placeholderTextColor="#666"
           autoCapitalize="characters"
         />

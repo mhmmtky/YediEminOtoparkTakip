@@ -114,7 +114,7 @@ export const handleGetUsers = async () => {
         surname: user.surname || "",
         username: user.username,
         personal_number: user.personal_number || "---",
-        role: user.role || "personel",
+        role: user.role || "employee",
         status: user.status || "active",
       };
     });

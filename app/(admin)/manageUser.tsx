@@ -288,9 +288,9 @@ export default function ManageUserScreen() {
                 <TouchableOpacity
                   style={[
                     styles.selectorButton,
-                    editRole === "personal" && styles.selectorActivePersonal,
+                    editRole === "employee" && styles.selectorActivePersonal,
                   ]}
-                  onPress={() => setEditRole("personal")}>
+                  onPress={() => setEditRole("employee")}>
                   <Text style={styles.selectorText}>Personel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity

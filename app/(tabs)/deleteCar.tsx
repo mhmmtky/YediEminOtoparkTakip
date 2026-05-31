@@ -208,7 +208,7 @@ export default function deleteCar() {
           style={styles.searchInput}
           value={searchPlate}
           onChangeText={(text) => setSearchPlate(text.toUpperCase())}
-          placeholder="Çıkış İçin Plaka Ara (Örn: 41 FB 508)"
+          placeholder="Plaka ile Ara : 34 T 1508"
           placeholderTextColor="#666"
           autoCapitalize="characters"
         />
@@ -290,7 +290,7 @@ export default function deleteCar() {
                   style={styles.modalInput}
                   value={ownerFullName}
                   onChangeText={setOwnerFullName}
-                  placeholder="Örn: Muhammet Kaya"
+                  placeholder="Örn: Mehmet Arslan"
                   placeholderTextColor="#666"
                 />
               </View>
